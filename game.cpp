@@ -14,7 +14,8 @@ constexpr auto health_bar_width = 70;
 constexpr auto max_frames = 2000;
 
 //Global performance timer
-constexpr auto REF_PERFORMANCE = 114757; //UPDATE THIS WITH YOUR REFERENCE PERFORMANCE (see console after 2k frames)
+// Timer Sven: 57343.6
+constexpr auto REF_PERFORMANCE = 57343.6; //UPDATE THIS WITH YOUR REFERENCE PERFORMANCE (see console after 2k frames)
 static timer perf_timer;
 static float duration;
 
@@ -127,7 +128,7 @@ bool Tmpl8::Game::left_of_line(vec2 line_start, vec2 line_end, vec2 point)
 void Game::update(float deltaTime)
 {
     //Calculate the route to the destination for each tank using BFS
-    //Initializing routes here so it gets counted for performance..
+    //Initializing routes here, so it gets counted for performance..
     if (frame_count == 0)
     {
         for (Tank& t : tanks)
@@ -185,7 +186,7 @@ void Game::update(float deltaTime)
         smoke.tick();
     }
 
-    //Calculate "forcefield" around active tanks
+    //Calculate "force field" around active tanks
     forcefield_hull.clear();
 
     //Find first active tank (this loop is a bit disgusting, fix?)
