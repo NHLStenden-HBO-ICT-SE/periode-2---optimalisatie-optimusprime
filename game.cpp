@@ -14,8 +14,11 @@ constexpr auto health_bar_width = 70;
 constexpr auto max_frames = 2000;
 
 //Global performance timer
+
 // Timer Sven: 57343.6
-constexpr auto REF_PERFORMANCE = 57343.6; //UPDATE THIS WITH YOUR REFERENCE PERFORMANCE (see console after 2k frames)
+// Timer Achmed: 70845.5
+constexpr auto REF_PERFORMANCE = 70845.5; //UPDATE THIS WITH YOUR REFERENCE PERFORMANCE (see console after 2k frames)
+
 static timer perf_timer;
 static float duration;
 
