@@ -343,3 +343,5 @@ ASALocalRun/
 # Local History for Visual Studio
 .localhistory/
 x64/Tmpl8_2019-01_debug.lib
+
+assets/
