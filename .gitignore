@@ -344,4 +344,10 @@ ASALocalRun/
 .localhistory/
 x64/Tmpl8_2019-01_debug.lib
 
+# asset files for Achmed
 assets/
+
+# cmake-builds cLion
+cmake-build-debug/
+cmake-build-release/
+

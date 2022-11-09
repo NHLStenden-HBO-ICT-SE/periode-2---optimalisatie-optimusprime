@@ -17,7 +17,8 @@ typedef unsigned int uint;
 #define FREE64(x) _aligned_free(x)
 #else
 #define ALIGN(x) __attribute__((aligned(x)))
-#define MALLOC64(x) aligned_alloc(64, x)
+// #define MALLOC64(x) aligned_alloc(64, x)
+#define MALLOC64(x) malloc(x)
 #define FREE64(x) free(x)
 #define __inline __attribute__((__always_inline__))
 #endif
@@ -477,6 +478,7 @@ class mat4
     }
 };
 
+/*
 class aabb
 {
   public:
@@ -582,6 +584,7 @@ class aabb
     __inline __m128 center() const { return _mm_mul_ps(_mm_add_ps(bmin4, bmax4), _mm_set_ps1(0.5f)); }
     __inline float center(uint axis) const { return (bmin[axis] + bmax[axis]) * 0.5f; }
 };
+*/
 
 mat4 operator*(const mat4& a, const mat4& b);
 bool operator==(const mat4& a, const mat4& b);
