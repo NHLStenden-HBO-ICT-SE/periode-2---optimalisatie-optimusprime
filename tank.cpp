@@ -7,7 +7,7 @@ namespace Tmpl8
 Tank::Tank(
     float pos_x,
     float pos_y,
-    allignments allignment,
+    allignments alignment,
     Sprite* tank_sprite,
     Sprite* smoke_sprite,
     float tar_x,
@@ -16,16 +16,16 @@ Tank::Tank(
     int health,
     float max_speed)
     : position(pos_x, pos_y),
-      allignment(allignment),
+      speed(0),
       target(tar_x, tar_y),
       health(health),
       collision_radius(collision_radius),
-      max_speed(max_speed),
       force(0, 0),
+      max_speed(max_speed),
       reload_time(1),
       reloaded(false),
-      speed(0),
       active(true),
+      allignment(alignment),
       current_frame(0),
       tank_sprite(tank_sprite),
       smoke_sprite(smoke_sprite)
