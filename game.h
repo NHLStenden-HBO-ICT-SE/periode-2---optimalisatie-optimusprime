@@ -62,6 +62,32 @@ class Game
 
     //Checks if a point lies on the left of an arbitrary angled line
     bool left_of_line(vec2 line_start, vec2 line_end, vec2 point);
+
+    void initializeTankRoute();
+
+    void tankCollision();
+
+    void updateTanks();
+
+    void updateSmoke();
+
+    void calcConvexHull(int first_active, vec2 &point_on_hull);
+
+    int findFirstActiveTank();
+
+    vec2 findLeftPointOnConvexHull();
+
+    void updateRockets();
+
+    void disableRockets();
+
+    void updateParticleBeams();
+
+    void updateExplotionSprites();
+
+    void eraseExplosions();
+
+    void removeExplodedRockets();
 };
 
 }; // namespace Tmpl8

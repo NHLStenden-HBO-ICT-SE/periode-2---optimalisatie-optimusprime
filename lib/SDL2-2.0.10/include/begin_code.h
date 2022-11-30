@@ -76,7 +76,7 @@
 # endif
 #endif
 
-/* By default SDL uses the C calling convention */
+/* By default, SDL uses the C calling convention */
 #ifndef SDLCALL
 #if (defined(__WIN32__) || defined(__WINRT__)) && !defined(__GNUC__)
 #define SDLCALL __cdecl

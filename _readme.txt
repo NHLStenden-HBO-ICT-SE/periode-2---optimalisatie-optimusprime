@@ -17,7 +17,7 @@ How to use:
    want to run a 64-bit build.
 You can go further by:
 - Expanding the game class in game.h;
-- Implementing some of the empty functions for mouse and keyboard
+- Implementing some empty functions for mouse and keyboard
   handling;
 - Exploring the code of the template in surface.cpp and template.cpp.
 
