@@ -16,7 +16,7 @@ Rocket::~Rocket()
 void Rocket::tick()
 {
     position += speed;
-    if (++current_frame > 8) current_frame = 0;
+    if (++current_frame > 8) current_frame = 0; //todo why?
 }
 
 //Draw the sprite with the facing based on this rockets movement direction

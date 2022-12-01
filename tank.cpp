@@ -97,7 +97,7 @@ void Tank::deactivate()
 }
 
 //Remove health
-bool Tank::hit(int hit_value)
+bool Tank::isDestroyed(int hit_value)
 {
     health -= hit_value;
 

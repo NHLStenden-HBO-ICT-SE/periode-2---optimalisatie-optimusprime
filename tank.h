@@ -27,7 +27,7 @@ class Tank
     void reload_rocket();
 
     void deactivate();
-    bool hit(int hit_value);
+    bool isDestroyed(int hit_value);
 
     void draw(Surface* screen);
 

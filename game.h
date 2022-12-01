@@ -1,15 +1,13 @@
 #pragma once
 
-namespace Tmpl8
-{
+namespace Tmpl8 {
 //forward declarations
 class Tank;
 class Rocket;
 class Smoke;
 class Particle_beam;
 
-class Game
-{
+class Game {
   public:
     void set_target(Surface* surface) { screen = surface; }
     void init();
@@ -47,6 +45,7 @@ class Game
     Surface* screen;
 
     vector<Tank> tanks;
+    vector<Tank> activeTanks;
     vector<Rocket> rockets;
     vector<Smoke> smokes;
     vector<Explosion> explosions;
@@ -90,4 +89,4 @@ class Game
     void removeExplodedRockets();
 };
 
-}; // namespace Tmpl8
+};

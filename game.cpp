@@ -198,7 +198,7 @@ void Game::updateParticleBeams() {
         for (Tank &tank: tanks) {
             if (tank.active &&
                 particle_beam.rectangle.intersects_circle(tank.get_position(), tank.get_collision_radius())) {
-                if (tank.hit(particle_beam.damage)) {
+                if (tank.isDestroyed(particle_beam.damage)) {
                     smokes.push_back(Smoke(smoke, tank.position - vec2(0, 48)));
                 }
             }
@@ -231,7 +231,7 @@ void Game::updateRockets() {
                 rocket.intersects(tank.position, tank.collision_radius)) {
                 explosions.push_back(Explosion(&explosion, tank.position));
 
-                if (tank.hit(rocket_hit_value)) {
+                if (tank.isDestroyed(rocket_hit_value)) {
                     smokes.push_back(Smoke(smoke, tank.position - vec2(7, 24)));
                 }
 
