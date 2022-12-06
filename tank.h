@@ -4,7 +4,7 @@ namespace Tmpl8
 {
     class Terrain; //forward declare
 
-enum allignments
+enum Color
 {
     BLUE,
     RED
@@ -13,7 +13,7 @@ enum allignments
 class Tank
 {
   public:
-    Tank(float pos_x, float pos_y, allignments alignment, Sprite* tank_sprite, Sprite* smoke_sprite, float tar_x, float tar_y, float collision_radius, int health, float max_speed);
+    Tank(float pos_x, float pos_y, Color alignment, Sprite* tank_sprite, Sprite* smoke_sprite, float tar_x, float tar_y, float collision_radius, int health, float max_speed);
 
     ~Tank();
 
@@ -27,11 +27,12 @@ class Tank
     void reload_rocket();
 
     void deactivate();
-    bool isDestroyed(int hit_value);
+    bool isDestroyedByHit(int hit_value);
 
     void draw(Surface* screen);
 
     int compare_health(const Tank& other) const;
+
 
     void push(vec2 direction, float magnitude);
 
@@ -52,12 +53,14 @@ class Tank
     bool reloaded;
     bool active;
 
-    allignments allignment;
+
+    Color color;
 
     int current_frame;
     Sprite* tank_sprite;
     Sprite* smoke_sprite;
 
+    static bool compare_active(const Tank &t1, const Tank &t2);
 };
 
 } // namespace Tmpl8

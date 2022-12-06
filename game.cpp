@@ -1,4 +1,6 @@
 #include "precomp.h" // include (only) this in every .cpp file
+#include "game.h"
+
 
 constexpr auto num_tanks_blue = 2048;
 constexpr auto num_tanks_red = 2048;
@@ -17,7 +19,7 @@ constexpr auto max_frames = 2000;
 
 // Timer Sven: 57343.6
 // Timer Achmed: 70845.5
-constexpr auto REF_PERFORMANCE = 70845.5; //UPDATE THIS WITH YOUR REFERENCE PERFORMANCE (see console after 2k frames)
+constexpr auto REF_PERFORMANCE = 57343.6; //UPDATE THIS WITH YOUR REFERENCE PERFORMANCE (see console after 2k frames)
 
 static timer perf_timer;
 static float duration;
@@ -100,7 +102,7 @@ Tank &Game::find_closest_enemy(Tank &current_tank) {
     int closest_index = 0;
 
     for (int i = 0; i < tanks.size(); i++) {
-        if (tanks.at(i).allignment != current_tank.allignment && tanks.at(i).active) {
+        if (tanks.at(i).color != current_tank.color && tanks.at(i).active) {
             float sqr_dist = fabsf((tanks.at(i).get_position() - current_tank.get_position()).sqr_length());
             if (sqr_dist < closest_distance) {
                 closest_distance = sqr_dist;
@@ -110,6 +112,10 @@ Tank &Game::find_closest_enemy(Tank &current_tank) {
     }
 
     return tanks.at(closest_index);
+}
+
+bool operator<(const Tank &tank1, const Tank &tank2) {
+    return tank1.health < tank2.health;
 }
 
 //Checks if a point lies on the left of an arbitrary angled line
@@ -126,6 +132,9 @@ bool Tmpl8::Game::left_of_line(vec2 line_start, vec2 line_end, vec2 point) {
 // Targeting etc..
 // -----------------------------------------------------------
 void Game::update(float deltaTime) {
+
+    sortActiveTanks();
+
     //Calculate the route to the destination for each tank using BFS
     //Initializing routes here, so it gets counted for performance..
     initializeTankRoute();
@@ -142,7 +151,7 @@ void Game::update(float deltaTime) {
     updateSmoke();
 
     //Calculate "force field" around active tanks
-    // forcefield_hull.clear();
+    // forcefield_hull.clear(); // is now done in calcConvexHull()
 
     //todo findLeftPointOnConvexHull as parameter in calcConvexHull() it's not working yet. Have to find the reason
     vec2 point_on_hull = findLeftPointOnConvexHull();
@@ -157,23 +166,29 @@ void Game::update(float deltaTime) {
     disableRockets();
 
     //Remove exploded rockets with remove erase idiom
-    removeExplodedRockets();
+    removeInactiveRockets();
 
     //Update particle beams
     updateParticleBeams();
 
     //Update explosion sprites and remove when done with remove erase idiom
-    updateExplotionSprites();
+    updateExplosionSprites();
 
     eraseExplosions();
 }
 
-void Game::removeExplodedRockets() {
+
+void Game::removeInactiveRockets() {
     rockets.erase(remove_if(
                           rockets.begin(),
                           rockets.end(),
                           [](const Rocket &rocket) { return !rocket.active; }),
                   rockets.end());
+}
+
+void Game::sortActiveTanks() {
+    std::stable_sort(tanks.begin(), tanks.end(), Tank::compare_active);
+    inactiveTanks = count_if(tanks.begin(), tanks.end(), [](const Tank &t){return !t.active;});
 }
 
 void Game::eraseExplosions() {
@@ -184,7 +199,7 @@ void Game::eraseExplosions() {
                      explosions.end());
 }
 
-void Game::updateExplotionSprites() {
+void Game::updateExplosionSprites() {
     for (Explosion &explosion: explosions) {
         explosion.tick();
     }
@@ -198,7 +213,7 @@ void Game::updateParticleBeams() {
         for (Tank &tank: tanks) {
             if (tank.active &&
                 particle_beam.rectangle.intersects_circle(tank.get_position(), tank.get_collision_radius())) {
-                if (tank.isDestroyed(particle_beam.damage)) {
+                if (tank.isDestroyedByHit(particle_beam.damage)) {
                     smokes.push_back(Smoke(smoke, tank.position - vec2(0, 48)));
                 }
             }
@@ -226,19 +241,29 @@ void Game::updateRockets() {
         rocket.tick();
 
         //Check if rocket collides with enemy tank, spawn explosion, and if tank is destroyed spawn a smoke plume
-        for (Tank &tank: tanks) {
-            if (tank.active && (tank.allignment != rocket.allignment) &&
-                rocket.intersects(tank.position, tank.collision_radius)) {
-                explosions.push_back(Explosion(&explosion, tank.position));
+        RocketHitsTank(rocket);
+    }
+}
 
-                if (tank.isDestroyed(rocket_hit_value)) {
-                    smokes.push_back(Smoke(smoke, tank.position - vec2(7, 24)));
-                }
+void Game::RocketHitsTank(Rocket &rocket) {
+    for (Tank &tank: tanks) {
+        bool activeTankIsHitByEnemyRocket =
+                tank.active && (tank.color != rocket.color) && rocket.intersects(tank.position, tank.collision_radius);
 
-                rocket.active = false;
-                break;
-            }
+        if (activeTankIsHitByEnemyRocket) {
+            drawExplosionOnHitTank(tank);
+            drawSmokeOnDestroyedTank(tank);
+            rocket.deactivate();
+            break;
         }
+    }
+}
+
+void Game::drawExplosionOnHitTank(Tank &tank) { explosions.push_back(Explosion(&explosion, tank.position)); }
+
+void Game::drawSmokeOnDestroyedTank(Tank &tank) {
+    if (tank.isDestroyedByHit(rocket_hit_value)) {
+        smokes.push_back(Smoke(smoke, tank.position - vec2(7, 24)));
     }
 }
 
@@ -254,6 +279,7 @@ vec2 Game::findLeftPointOnConvexHull() {
     }
     return point_on_hull;
 }
+
 
 //Find first active tank (this loop is a bit disgusting, fix?)
 int Game::findFirstActiveTank() {
@@ -308,7 +334,7 @@ void Game::updateTanks() {
 
                 rockets.push_back(
                         Rocket(tank.position, (target.get_position() - tank.position).normalized() * 3, rocket_radius,
-                               tank.allignment, ((tank.allignment == RED) ? &rocket_red : &rocket_blue)));
+                               tank.color, ((tank.color == RED) ? &rocket_red : &rocket_blue)));
 
                 tank.reload_rocket();
             }
@@ -430,6 +456,7 @@ Tmpl8::Game::insertion_sort_tanks_health(const std::vector<Tank> &original, std:
     }
 }
 
+
 // -----------------------------------------------------------
 // Draw the health bars based on the given tanks health values
 // -----------------------------------------------------------
@@ -514,3 +541,4 @@ void Game::tick(float deltaTime) {
     string frame_count_string = "FRAME: " + std::to_string(frame_count);
     frame_count_font->print(screen, frame_count_string.c_str(), 350, 580);
 }
+

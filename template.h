@@ -623,7 +623,7 @@ inline bool circle_segment_intersect(vec2 s1, vec2 s2, vec2 cp, float r)
 
         // 3x HIT cases:
         //          -o->             --|-->  |            |  --|->
-        // Impale(t1 hit,t2 hit), Poke(t1 hit,t2>1), ExitWound(t1<0, t2 isDestroyed),
+        // Impale(t1 hit,t2 hit), Poke(t1 hit,t2>1), ExitWound(t1<0, t2 isDestroyedByHit),
 
         // 3x MISS cases:
         //       ->  o                     o ->              | -> |

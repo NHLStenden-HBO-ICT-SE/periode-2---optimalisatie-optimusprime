@@ -9,6 +9,10 @@ class Particle_beam;
 
 class Game {
   public:
+    Game()
+    {
+
+    }
     void set_target(Surface* surface) { screen = surface; }
     void init();
     void shutdown();
@@ -56,7 +60,7 @@ class Game {
 
     Font* frame_count_font;
     long long frame_count = 0;
-
+    int inactiveTanks = 0;
     bool lock_update = false;
 
     //Checks if a point lies on the left of an arbitrary angled line
@@ -82,11 +86,31 @@ class Game {
 
     void updateParticleBeams();
 
-    void updateExplotionSprites();
+    void updateExplosionSprites();
 
     void eraseExplosions();
 
-    void removeExplodedRockets();
+    void removeInactiveRockets();
+
+    void RocketHitsTank(Rocket &rocket);
+
+    void drawSmokeOnDestroyedTank(Tank &tank);
+
+    void drawExplosionOnHitTank(Tank &tank);
+
+    void sortActiveTanks(vector<Tank> &tanks);
+
+    template<class _Compare>
+    _Compare tankComparer(bool *pBoolean);
+
+    template<class _Compare>
+    bool compare_Tanks();
+
+    bool compareTanks(Tank T1, Tank T2);
+
+    void removeInactiveTanks();
+
+    void sortActiveTanks();
 };
 
 };
