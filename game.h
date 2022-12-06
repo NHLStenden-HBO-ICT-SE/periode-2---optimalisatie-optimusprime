@@ -124,7 +124,7 @@ class Game {
 
     void DrawSprites();
 
-    void DrawForcefield();
+    void DrawForceField();
 
     void DrawSortedHealthBars();
 };

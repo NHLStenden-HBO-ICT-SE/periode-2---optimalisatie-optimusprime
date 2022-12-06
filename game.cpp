@@ -389,8 +389,8 @@ void Game::draw() {
     //Draw sprites
     DrawSprites();
 
-    //Draw forcefield (mostly for debugging, its kinda ugly..)
-    DrawForcefield();
+    //Draw force field (mostly for debugging, its kinda ugly..)
+    DrawForceField();
 
     //Draw sorted health bars
     DrawSortedHealthBars();
@@ -411,7 +411,7 @@ void Game::DrawSortedHealthBars() {
     }
 }
 
-void Game::DrawForcefield() {
+void Game::DrawForceField() {
     for (size_t i = 0; i < forcefield_hull.size(); i++) {
         vec2 line_start = forcefield_hull.at(i);
         vec2 line_end = forcefield_hull.at((i + 1) % forcefield_hull.size());
