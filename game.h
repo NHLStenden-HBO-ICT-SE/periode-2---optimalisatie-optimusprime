@@ -111,6 +111,22 @@ class Game {
     void removeInactiveTanks();
 
     void sortActiveTanks();
+
+    void DrawTanks();
+
+    void DrawRockets();
+
+    void DrawSmoke();
+
+    void DrawParticleBeams();
+
+    void DrawExplosions();
+
+    void DrawSprites();
+
+    void DrawForcefield();
+
+    void DrawSortedHealthBars();
 };
 
 };
