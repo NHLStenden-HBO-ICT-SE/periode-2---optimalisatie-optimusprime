@@ -6,14 +6,15 @@ namespace Tmpl8 {
     Tank::Tank(
             float pos_x,
             float pos_y,
-            Color alignment,
+            Color color,
             Sprite *tank_sprite,
             Sprite *smoke_sprite,
             float tar_x,
             float tar_y,
             float collision_radius,
             int health,
-            float max_speed)
+            float max_speed,
+            Grid* grid)
             : position(pos_x, pos_y),
               speed(0),
               target(tar_x, tar_y),
@@ -24,11 +25,12 @@ namespace Tmpl8 {
               reload_time(1),
               reloaded(false),
               active(true),
-              color(alignment),
+              color(color),
               current_frame(0),
               tank_sprite(tank_sprite),
-              smoke_sprite(smoke_sprite) {
-    }
+              smoke_sprite(smoke_sprite),
+              grid(grid){
+              }
 
     Tank::~Tank() {
     }
@@ -43,6 +45,9 @@ namespace Tmpl8 {
         //Update using accumulated force
         speed = direction + force;
         position += speed * max_speed * 0.5f;
+
+        grid->remove(this);
+        grid->add(this);
 
         //Update reload time
         if (--reload_time <= 0.0f) {

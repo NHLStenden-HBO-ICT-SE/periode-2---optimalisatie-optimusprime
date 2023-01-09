@@ -27,7 +27,6 @@ namespace Tmpl8 {
         active = false;
     }
 
-    //todo aabb for circle to check if it's near before doing the intersects function
 //Does the given circle collide with this rockets collision circle?
     bool Rocket::intersects(vec2 position_other, float radius_other) const {
         //Note: Uses squared lengths to remove expensive square roots

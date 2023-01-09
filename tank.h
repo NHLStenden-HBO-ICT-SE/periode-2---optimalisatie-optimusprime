@@ -1,4 +1,5 @@
 #pragma once
+class Grid;
 
 namespace Tmpl8
 {
@@ -13,7 +14,9 @@ enum Color
 class Tank
 {
   public:
-    Tank(float pos_x, float pos_y, Color alignment, Sprite* tank_sprite, Sprite* smoke_sprite, float tar_x, float tar_y, float collision_radius, int health, float max_speed);
+    Tank(float pos_x, float pos_y, Color color, Sprite* tank_sprite,
+         Sprite* smoke_sprite, float tar_x, float tar_y, float collision_radius,
+         int health, float max_speed, Grid* grid);
 
     ~Tank();
 
@@ -39,6 +42,8 @@ class Tank
     vec2 position;
     vec2 speed;
     vec2 target;
+
+    Grid* grid;
 
     vector<vec2> current_route;
 

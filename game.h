@@ -2,131 +2,143 @@
 
 namespace Tmpl8 {
 //forward declarations
-class Tank;
-class Rocket;
-class Smoke;
-class Particle_beam;
+    class Tank;
 
-class Game {
-  public:
-    Game()
-    {
+    class Rocket;
 
-    }
-    void set_target(Surface* surface) { screen = surface; }
-    void init();
-    void shutdown();
-    void update(float deltaTime);
-    void draw();
-    void tick(float deltaTime);
-    void insertion_sort_tanks_health(const std::vector<Tank>& original, std::vector<const Tank*>& sorted_tanks, int begin, int end);
-    void draw_health_bars(const std::vector<const Tank*>& sorted_tanks, const int team);
-    void measure_performance();
+    class Smoke;
 
-    Tank& find_closest_enemy(Tank& current_tank);
+    class Particle_beam;
 
-    void mouse_up(int button)
-    { /* implement if you want to detect mouse button presses */
-    }
+    class Game {
+    public:
+        Game() {
+        }
 
-    void mouse_down(int button)
-    { /* implement if you want to detect mouse button presses */
-    }
+        void set_target(Surface *surface) { screen = surface; }
 
-    void mouse_move(int x, int y)
-    { /* implement if you want to detect mouse movement */
-    }
+        void init();
 
-    void key_up(int key)
-    { /* implement if you want to handle keys */
-    }
+        void shutdown();
 
-    void key_down(int key)
-    { /* implement if you want to handle keys */
-    }
+        void update(float deltaTime);
 
-  private:
-    Surface* screen;
+        void draw();
 
-    vector<Tank> tanks;
-    vector<Tank> activeTanks;
-    vector<Rocket> rockets;
-    vector<Smoke> smokes;
-    vector<Explosion> explosions;
-    vector<Particle_beam> particle_beams;
+        void tick(float deltaTime);
 
-    Terrain background_terrain;
-    std::vector<vec2> forcefield_hull;
+        void insertion_sort_tanks_health(const std::vector<Tank> &original, std::vector<const Tank *> &sorted_tanks,
+                                         int begin, int end);
 
-    Font* frame_count_font;
-    long long frame_count = 0;
-    int inactiveTanks = 0;
-    bool lock_update = false;
+        void draw_health_bars(const std::vector<const Tank *> &sorted_tanks, const int team);
 
-    //Checks if a point lies on the left of an arbitrary angled line
-    bool left_of_line(vec2 line_start, vec2 line_end, vec2 point);
+        void measure_performance();
 
-    void initializeTankRoute();
+        Tank &find_closest_enemy(Tank &current_tank);
 
-    void tankCollision();
+        void mouse_up(int button) { /* implement if you want to detect mouse button presses */
+        }
 
-    void updateTanks();
+        void mouse_down(int button) { /* implement if you want to detect mouse button presses */
+        }
 
-    void updateSmoke();
+        void mouse_move(int x, int y) { /* implement if you want to detect mouse movement */
+        }
 
-    void calcConvexHull(int first_active, vec2 &point_on_hull);
+        void key_up(int key) { /* implement if you want to handle keys */
+        }
 
-    int findFirstActiveTank();
+        void key_down(int key) { /* implement if you want to handle keys */
+        }
 
-    vec2 findLeftPointOnConvexHull();
+        Grid grid;
 
-    void updateRockets();
+        constexpr const static float tank_radius = 3.f;
+        constexpr const static float rocket_radius = 5.f;
+    private:
+        Surface *screen;
+        vector<Tank> tanks;
+        vector<Tank> activeTanks;
+        vector<Rocket> rockets;
+        vector<Smoke> smokes;
+        vector<Explosion> explosions;
+        vector<Particle_beam> particle_beams;
 
-    void disableRockets();
+        Terrain background_terrain;
+        std::vector<vec2> forcefield_hull;
 
-    void updateParticleBeams();
+    private:
+        Font *frame_count_font;
+        long long frame_count = 0;
+        int inactiveTanks = 0;
+        bool lock_update = false;
 
-    void updateExplosionSprites();
+        //Checks if a point lies on the left of an arbitrary angled line
+        bool left_of_line(vec2 line_start, vec2 line_end, vec2 point);
 
-    void eraseExplosions();
+        void initializeTankRoute();
 
-    void removeInactiveRockets();
+        void tankCollision();
 
-    void RocketHitsTank(Rocket &rocket);
+        void updateTanks();
 
-    void drawSmokeOnDestroyedTank(Tank &tank);
+        void updateSmoke();
 
-    void drawExplosionOnHitTank(Tank &tank);
+        void calcConvexHull(int first_active, vec2 &point_on_hull);
 
-    void sortActiveTanks(vector<Tank> &tanks);
+        int findFirstActiveTank();
 
-    template<class _Compare>
-    _Compare tankComparer(bool *pBoolean);
+        vec2 findLeftPointOnConvexHull();
 
-    template<class _Compare>
-    bool compare_Tanks();
+        void updateRockets();
 
-    bool compareTanks(Tank T1, Tank T2);
+        void disableRockets();
 
-    void removeInactiveTanks();
+        void updateParticleBeams();
 
-    void sortActiveTanks();
+        void updateExplosionSprites();
 
-    void DrawTanks();
+        void eraseExplosions();
 
-    void DrawRockets();
+        void removeInactiveRockets();
 
-    void DrawSmoke();
+        void RocketHitsTank(Rocket &rocket);
 
-    void DrawParticleBeams();
+        void drawSmokeOnDestroyedTank(Tank &tank);
 
-    void DrawExplosions();
+        void drawExplosionOnHitTank(Tank &tank);
 
-    void DrawSprites();
+        void sortActiveTanks(vector<Tank> &tanks);
 
-    void DrawForceField();
+        template<class _Compare>
+        _Compare tankComparer(bool *pBoolean);
 
-    void DrawSortedHealthBars();
-};
+        template<class _Compare>
+        bool compare_Tanks();
+
+        bool compareTanks(Tank T1, Tank T2);
+
+        void removeInactiveTanks();
+
+        void sortActiveTanks();
+
+        void DrawTanks();
+
+        void DrawRockets();
+
+        void DrawSmoke();
+
+        void DrawParticleBeams();
+
+        void DrawExplosions();
+
+        void DrawSprites();
+
+        void DrawForceField();
+
+        void DrawSortedHealthBars();
+
+        void rocketIntersectsTank(Rocket &rocket);
+    };
 
 };
