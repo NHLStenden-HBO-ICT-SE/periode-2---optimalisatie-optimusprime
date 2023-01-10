@@ -22,6 +22,11 @@ void Grid::remove(Tank *tank) {
     }
 }
 
+void Grid::update(Tank* tank) {
+    remove(tank);
+    add(tank);
+}
+
 std::vector<Tank *> Grid::getTanksAt(vec2 cellPosition) {
     return grid.at(cellPosition.x).at(cellPosition.y);
 }

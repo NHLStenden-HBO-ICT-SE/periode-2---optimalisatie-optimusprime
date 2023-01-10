@@ -27,7 +27,7 @@ public:
 
     void add(Tank *tank);
 
-    void update();
+    void update(Tank *tank);
 
     void remove(Tank *tank);
 

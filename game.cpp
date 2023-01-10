@@ -262,7 +262,7 @@ void Game::rocketIntersectsTank(Rocket &rocket) {
                     drawExplosionOnHitTank(*tank);
                     drawSmokeOnDestroyedTank(*tank);
                     rocket.deactivate();
-                    break;
+                    return;
                 }
             }
         }

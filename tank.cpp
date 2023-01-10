@@ -46,8 +46,7 @@ namespace Tmpl8 {
         speed = direction + force;
         position += speed * max_speed * 0.5f;
 
-        grid->remove(this);
-        grid->add(this);
+        grid->update(this);
 
         //Update reload time
         if (--reload_time <= 0.0f) {
