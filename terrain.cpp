@@ -127,6 +127,7 @@ namespace Tmpl8
             }
         }
     }
+   
 
     //Use Breadth-first search to find shortest route to the destination
     vector<vec2> Terrain::get_route(const Tank& tank, const vec2& target)
@@ -143,7 +144,8 @@ namespace Tmpl8
         queue.emplace();
         queue.back().push_back(&tiles.at(pos_y).at(pos_x));
 
-        std::vector<TerrainTile*> visited;
+        // use hash set to keep track of visited tiles 
+        std::unordered_set<TerrainTile*> visited;
 
         bool route_found = false;
         vector<TerrainTile*> current_route;
@@ -154,7 +156,7 @@ namespace Tmpl8
             TerrainTile* current_tile = current_route.back();
 
             //Check all exits, if target then done, else if unvisited push a new partial route
-            for (TerrainTile * exit : current_tile->exits)
+            for (TerrainTile* exit : current_tile->exits)
             {
                 if (exit->position_x == target_x && exit->position_y == target_y)
                 {
@@ -162,20 +164,13 @@ namespace Tmpl8
                     route_found = true;
                     break;
                 }
-                else if (!exit->visited)
+                else if (visited.find(exit) == visited.end())
                 {
-                    exit->visited = true;
-                    visited.push_back(exit);
+                    visited.insert(exit);
                     queue.push(current_route);
                     queue.back().push_back(exit);
                 }
             }
-        }
-
-        //Reset tiles
-        for (TerrainTile * tile : visited)
-        {
-            tile->visited = false;
         }
 
         if (route_found)
@@ -195,6 +190,7 @@ namespace Tmpl8
         }
 
     }
+
 
     //TODO: Function not used, convert BFS to dijkstra and take speed into account next year :)
     float Terrain::get_speed_modifier(const vec2& position) const

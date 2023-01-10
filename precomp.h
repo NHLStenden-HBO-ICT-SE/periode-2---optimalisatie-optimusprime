@@ -57,6 +57,8 @@
 #include <mutex>
 #include <thread>
 #include <filesystem>
+#include <unordered_set>
+
 
 // Namespaced C headers:
 #include <cassert>

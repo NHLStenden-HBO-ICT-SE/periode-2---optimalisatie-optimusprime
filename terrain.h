@@ -2,6 +2,7 @@
 
 namespace Tmpl8
 {
+    
     enum TileType
     {
         GRASS,
@@ -62,5 +63,13 @@ namespace Tmpl8
         std::unique_ptr<Sprite> tile_water;
 
         std::array<std::array<TerrainTile, terrain_width>, terrain_height> tiles;
+    };
+    typedef std::pair<float, std::vector<TerrainTile*>> FloatVectorPair;
+
+    struct CompareDist {
+        bool operator()(const FloatVectorPair& left, const FloatVectorPair& right) const {
+            return left.first > right.first;
+
+        }
     };
 }
