@@ -1,6 +1,4 @@
 #include "precomp.h" // include (only) this in every .cpp file
-#include "game.h"
-
 
 constexpr auto num_tanks_blue = 2048;
 constexpr auto num_tanks_red = 2048;
@@ -19,7 +17,7 @@ constexpr auto max_frames = 2000;
 
 // Timer Sven: 57343.6
 // Timer Achmed: 70845.5
-constexpr auto REF_PERFORMANCE = 57343.6; //UPDATE THIS WITH YOUR REFERENCE PERFORMANCE (see console after 2k frames)
+constexpr auto REF_PERFORMANCE = 70845.5; //UPDATE THIS WITH YOUR REFERENCE PERFORMANCE (see console after 2k frames)
 
 static timer perf_timer;
 static float duration;
@@ -44,6 +42,8 @@ static Sprite particle_beam_sprite(particle_beam_img, 3);
 const static vec2 tank_size(7, 9);
 const static vec2 rocket_size(6, 6);
 
+const static float tank_radius = 3.f;
+const static float rocket_radius = 5.f;
 
 // -----------------------------------------------------------
 // Initialize the simulation state
@@ -68,22 +68,14 @@ void Game::init() {
     //Spawn blue tanks
     for (int i = 0; i < num_tanks_blue; i++) {
         vec2 position{start_blue_x + ((i % max_rows) * spacing), start_blue_y + ((i / max_rows) * spacing)};
-        tanks.push_back(Tank(position.x, position.y, BLUE,
-                             &tank_blue, &smoke, 1100.f, position.y + 16,
-                             tank_radius, tank_max_health, tank_max_speed, &grid));
+        tanks.push_back(Tank(position.x, position.y, BLUE, &tank_blue, &smoke, 1100.f, position.y + 16, tank_radius,
+                             tank_max_health, tank_max_speed));
     }
     //Spawn red tanks
     for (int i = 0; i < num_tanks_red; i++) {
         vec2 position{start_red_x + ((i % max_rows) * spacing), start_red_y + ((i / max_rows) * spacing)};
-        tanks.push_back(Tank(position.x, position.y, RED,
-                             &tank_red, &smoke, 100.f, position.y + 16,
-                             tank_radius, tank_max_health, tank_max_speed, &grid));
-    }
-
-    grid = Grid(std::ceil(screen->get_width() / rocket_radius), rocket_radius);
-    // Add tanks to grid
-    for (int i = 0; i < tanks.size(); ++i) {
-        grid.add(&tanks.at(i));
+        tanks.push_back(Tank(position.x, position.y, RED, &tank_red, &smoke, 100.f, position.y + 16, tank_radius,
+                             tank_max_health, tank_max_speed));
     }
 
     particle_beams.push_back(
@@ -108,7 +100,7 @@ Tank &Game::find_closest_enemy(Tank &current_tank) {
     int closest_index = 0;
 
     for (int i = 0; i < tanks.size(); i++) {
-        if (tanks.at(i).color != current_tank.color && tanks.at(i).active) {
+        if (tanks.at(i).allignment != current_tank.allignment && tanks.at(i).active) {
             float sqr_dist = fabsf((tanks.at(i).get_position() - current_tank.get_position()).sqr_length());
             if (sqr_dist < closest_distance) {
                 closest_distance = sqr_dist;
@@ -118,10 +110,6 @@ Tank &Game::find_closest_enemy(Tank &current_tank) {
     }
 
     return tanks.at(closest_index);
-}
-
-bool operator<(const Tank &tank1, const Tank &tank2) {
-    return tank1.health < tank2.health;
 }
 
 //Checks if a point lies on the left of an arbitrary angled line
@@ -138,9 +126,6 @@ bool Tmpl8::Game::left_of_line(vec2 line_start, vec2 line_end, vec2 point) {
 // Targeting etc..
 // -----------------------------------------------------------
 void Game::update(float deltaTime) {
-
-    sortActiveTanks();
-
     //Calculate the route to the destination for each tank using BFS
     //Initializing routes here, so it gets counted for performance..
     initializeTankRoute();
@@ -157,7 +142,7 @@ void Game::update(float deltaTime) {
     updateSmoke();
 
     //Calculate "force field" around active tanks
-    // forcefield_hull.clear(); // is now done in calcConvexHull()
+    // forcefield_hull.clear();
 
     //todo findLeftPointOnConvexHull as parameter in calcConvexHull() it's not working yet. Have to find the reason
     vec2 point_on_hull = findLeftPointOnConvexHull();
@@ -172,29 +157,23 @@ void Game::update(float deltaTime) {
     disableRockets();
 
     //Remove exploded rockets with remove erase idiom
-    removeInactiveRockets();
+    removeExplodedRockets();
 
     //Update particle beams
     updateParticleBeams();
 
     //Update explosion sprites and remove when done with remove erase idiom
-    updateExplosionSprites();
+    updateExplotionSprites();
 
     eraseExplosions();
 }
 
-
-void Game::removeInactiveRockets() {
+void Game::removeExplodedRockets() {
     rockets.erase(remove_if(
                           rockets.begin(),
                           rockets.end(),
                           [](const Rocket &rocket) { return !rocket.active; }),
                   rockets.end());
-}
-
-void Game::sortActiveTanks() {
-    std::stable_sort(tanks.begin(), tanks.end(), Tank::compare_active);
-    inactiveTanks = count_if(tanks.begin(), tanks.end(), [](const Tank &t) { return !t.active; });
 }
 
 void Game::eraseExplosions() {
@@ -205,7 +184,7 @@ void Game::eraseExplosions() {
                      explosions.end());
 }
 
-void Game::updateExplosionSprites() {
+void Game::updateExplotionSprites() {
     for (Explosion &explosion: explosions) {
         explosion.tick();
     }
@@ -215,11 +194,11 @@ void Game::updateParticleBeams() {
     for (Particle_beam &particle_beam: particle_beams) {
         particle_beam.tick(tanks);
 
-        //Damage all tanks within the damage window of the beam (the window is an axis-aligned bounding square)
+        //Damage all tanks within the damage window of the beam (the window is an axis-aligned bounding box)
         for (Tank &tank: tanks) {
             if (tank.active &&
                 particle_beam.rectangle.intersects_circle(tank.get_position(), tank.get_collision_radius())) {
-                if (tank.isDestroyedByHit(particle_beam.damage)) {
+                if (tank.hit(particle_beam.damage)) {
                     smokes.push_back(Smoke(smoke, tank.position - vec2(0, 48)));
                 }
             }
@@ -247,51 +226,19 @@ void Game::updateRockets() {
         rocket.tick();
 
         //Check if rocket collides with enemy tank, spawn explosion, and if tank is destroyed spawn a smoke plume
-        rocketIntersectsTank(rocket);
-    }
-}
+        for (Tank &tank: tanks) {
+            if (tank.active && (tank.allignment != rocket.allignment) &&
+                rocket.intersects(tank.position, tank.collision_radius)) {
+                explosions.push_back(Explosion(&explosion, tank.position));
 
-void Game::rocketIntersectsTank(Rocket &rocket) {
-    vec2 cellPos(rocket.position.x / grid.CELL_SIZE, rocket.position.y / grid.CELL_SIZE);
-
-    for (int x = cellPos.x - 1; x < cellPos.x + 1; ++x) {
-        for (int y = cellPos.y - 1; y < cellPos.y + 1; ++y) {
-            for (Tank *tank: grid.getTanksAt(cellPos)) {
-                if (tank->active && (tank->color != rocket.color) &&
-                    rocket.intersects(tank->position, tank->collision_radius)) {
-                    drawExplosionOnHitTank(*tank);
-                    drawSmokeOnDestroyedTank(*tank);
-                    rocket.deactivate();
-                    return;
+                if (tank.hit(rocket_hit_value)) {
+                    smokes.push_back(Smoke(smoke, tank.position - vec2(7, 24)));
                 }
+
+                rocket.active = false;
+                break;
             }
         }
-    }
-}
-
-//old function
-void Game::RocketHitsTank(Rocket &rocket) {
-    for (Tank &tank: tanks) {
-        bool activeTankIsHitByEnemyRocket =
-                tank.active && (tank.color != rocket.color) && rocket.intersects(tank.position, tank.collision_radius);
-
-        if (activeTankIsHitByEnemyRocket) {
-            drawExplosionOnHitTank(tank);
-            drawSmokeOnDestroyedTank(tank);
-            rocket.deactivate();
-            break;
-        }
-    }
-}
-
-//todo create method that uses quad tree to more efficiently calculate rocket intersections
-
-
-void Game::drawExplosionOnHitTank(Tank &tank) { explosions.push_back(Explosion(&explosion, tank.position)); }
-
-void Game::drawSmokeOnDestroyedTank(Tank &tank) {
-    if (tank.isDestroyedByHit(rocket_hit_value)) {
-        smokes.push_back(Smoke(smoke, tank.position - vec2(7, 24)));
     }
 }
 
@@ -308,9 +255,7 @@ vec2 Game::findLeftPointOnConvexHull() {
     return point_on_hull;
 }
 
-
 //Find first active tank (this loop is a bit disgusting, fix?)
-// door sortTanks is altijd de eerste tank active, alle inactieve tanks worden achteraan gezet
 int Game::findFirstActiveTank() {
     int first_active = 0;
     for (Tank &tank: tanks) {
@@ -363,7 +308,7 @@ void Game::updateTanks() {
 
                 rockets.push_back(
                         Rocket(tank.position, (target.get_position() - tank.position).normalized() * 3, rocket_radius,
-                               tank.color, ((tank.color == RED) ? &rocket_red : &rocket_blue)));
+                               tank.allignment, ((tank.allignment == RED) ? &rocket_red : &rocket_blue)));
 
                 tank.reload_rocket();
             }
@@ -411,31 +356,29 @@ void Game::draw() {
     background_terrain.draw(screen);
 
     //Draw sprites
-    DrawSprites();
+    for (int i = 0; i < num_tanks_blue + num_tanks_red; i++) {
+        tanks.at(i).draw(screen);
 
-    //Draw force field (mostly for debugging, its kinda ugly..)
-    DrawForceField();
-
-    //Draw sorted health bars
-    DrawSortedHealthBars();
-}
-
-void Game::DrawSortedHealthBars() {
-    for (int t = 0; t < 2; t++) {
-        const int NUM_TANKS = ((t < 1) ? num_tanks_blue : num_tanks_red);
-
-        const int begin = ((t < 1) ? 0 : num_tanks_blue);
-        vector<const Tank *> sorted_tanks;
-        insertion_sort_tanks_health(tanks, sorted_tanks, begin, begin + NUM_TANKS);
-        sorted_tanks.erase(remove_if(sorted_tanks.begin(), sorted_tanks.end(),
-                                     [](const Tank *tank) { return !tank->active; }),
-                           sorted_tanks.end());
-
-        draw_health_bars(sorted_tanks, t);
+        vec2 tank_pos = tanks.at(i).get_position();
     }
-}
 
-void Game::DrawForceField() {
+    for (Rocket &rocket: rockets) {
+        rocket.draw(screen);
+    }
+
+    for (Smoke &smoke: smokes) {
+        smoke.draw(screen);
+    }
+
+    for (Particle_beam &particle_beam: particle_beams) {
+        particle_beam.draw(screen);
+    }
+
+    for (Explosion &explosion: explosions) {
+        explosion.draw(screen);
+    }
+
+    //Draw forcefield (mostly for debugging, its kinda ugly..)
     for (size_t i = 0; i < forcefield_hull.size(); i++) {
         vec2 line_start = forcefield_hull.at(i);
         vec2 line_end = forcefield_hull.at((i + 1) % forcefield_hull.size());
@@ -443,44 +386,18 @@ void Game::DrawForceField() {
         line_end.x += HEALTHBAR_OFFSET;
         screen->line(line_start, line_end, 0x0000ff);
     }
-}
 
-void Game::DrawSprites() {
-    DrawTanks();
-    DrawRockets();
-    DrawSmoke();
-    DrawParticleBeams();
-    DrawExplosions();
-}
+    //Draw sorted health bars
+    for (int t = 0; t < 2; t++) {
+        const int NUM_TANKS = ((t < 1) ? num_tanks_blue : num_tanks_red);
 
-void Game::DrawExplosions() {
-    for (Explosion &explosion: explosions) {
-        explosion.draw(screen);
-    }
-}
+        const int begin = ((t < 1) ? 0 : num_tanks_blue);
+        std::vector<const Tank *> sorted_tanks;
+        insertion_sort_tanks_health(tanks, sorted_tanks, begin, begin + NUM_TANKS);
+        sorted_tanks.erase(std::remove_if(sorted_tanks.begin(), sorted_tanks.end(),
+                                          [](const Tank *tank) { return !tank->active; }), sorted_tanks.end());
 
-void Game::DrawParticleBeams() {
-    for (Particle_beam &particle_beam: particle_beams) {
-        particle_beam.draw(screen);
-    }
-}
-
-void Game::DrawSmoke() {
-    for (Smoke &smoke: smokes) {
-        smoke.draw(screen);
-    }
-}
-
-void Game::DrawRockets() {
-    for (Rocket &rocket: rockets) {
-        rocket.draw(screen);
-    }
-}
-
-void Game::DrawTanks() {
-    for (int i = 0; i < num_tanks_blue + num_tanks_red; i++) {
-        tanks.at(i).draw(screen);
-        vec2 tank_pos = tanks.at(i).get_position();
+        draw_health_bars(sorted_tanks, t);
     }
 }
 
@@ -512,7 +429,6 @@ Tmpl8::Game::insertion_sort_tanks_health(const std::vector<Tank> &original, std:
         }
     }
 }
-
 
 // -----------------------------------------------------------
 // Draw the health bars based on the given tanks health values
@@ -598,4 +514,3 @@ void Game::tick(float deltaTime) {
     string frame_count_string = "FRAME: " + std::to_string(frame_count);
     frame_count_font->print(screen, frame_count_string.c_str(), 350, 580);
 }
-

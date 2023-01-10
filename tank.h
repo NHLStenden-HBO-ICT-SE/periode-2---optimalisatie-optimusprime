@@ -1,11 +1,10 @@
 #pragma once
-class Grid;
 
 namespace Tmpl8
 {
     class Terrain; //forward declare
 
-enum Color
+enum allignments
 {
     BLUE,
     RED
@@ -14,9 +13,7 @@ enum Color
 class Tank
 {
   public:
-    Tank(float pos_x, float pos_y, Color color, Sprite* tank_sprite,
-         Sprite* smoke_sprite, float tar_x, float tar_y, float collision_radius,
-         int health, float max_speed, Grid* grid);
+    Tank(float pos_x, float pos_y, allignments alignment, Sprite* tank_sprite, Sprite* smoke_sprite, float tar_x, float tar_y, float collision_radius, int health, float max_speed);
 
     ~Tank();
 
@@ -30,20 +27,17 @@ class Tank
     void reload_rocket();
 
     void deactivate();
-    bool isDestroyedByHit(int hit_value);
+    bool hit(int hit_value);
 
     void draw(Surface* screen);
 
     int compare_health(const Tank& other) const;
-
 
     void push(vec2 direction, float magnitude);
 
     vec2 position;
     vec2 speed;
     vec2 target;
-
-    Grid* grid;
 
     vector<vec2> current_route;
 
@@ -58,14 +52,12 @@ class Tank
     bool reloaded;
     bool active;
 
-
-    Color color;
+    allignments allignment;
 
     int current_frame;
     Sprite* tank_sprite;
     Sprite* smoke_sprite;
 
-    static bool compare_active(const Tank &t1, const Tank &t2);
 };
 
 } // namespace Tmpl8
