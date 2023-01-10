@@ -44,8 +44,6 @@ static Sprite particle_beam_sprite(particle_beam_img, 3);
 const static vec2 tank_size(7, 9);
 const static vec2 rocket_size(6, 6);
 
-const static float tank_radius = 3.f;
-const static float rocket_radius = 5.f;
 
 // -----------------------------------------------------------
 // Initialize the simulation state
@@ -72,17 +70,21 @@ void Game::init() {
         vec2 position{start_blue_x + ((i % max_rows) * spacing), start_blue_y + ((i / max_rows) * spacing)};
         tanks.push_back(Tank(position.x, position.y, BLUE,
                              &tank_blue, &smoke, 1100.f, position.y + 16,
-                             tank_radius, tank_max_health, tank_max_speed));
+                             tank_radius, tank_max_health, tank_max_speed, &grid));
     }
     //Spawn red tanks
     for (int i = 0; i < num_tanks_red; i++) {
         vec2 position{start_red_x + ((i % max_rows) * spacing), start_red_y + ((i / max_rows) * spacing)};
         tanks.push_back(Tank(position.x, position.y, RED,
                              &tank_red, &smoke, 100.f, position.y + 16,
-                             tank_radius, tank_max_health, tank_max_speed));
+                             tank_radius, tank_max_health, tank_max_speed, &grid));
     }
 
-    activeTanks = tanks;
+    grid = Grid(std::ceil(screen->get_width() / rocket_radius), rocket_radius);
+    // Add tanks to grid
+    for (int i = 0; i < tanks.size(); ++i) {
+        grid.add(&tanks.at(i));
+    }
 
     particle_beams.push_back(
             Particle_beam(vec2(590, 327), vec2(100, 50), &particle_beam_sprite, particle_beam_hit_value));
@@ -213,7 +215,7 @@ void Game::updateParticleBeams() {
     for (Particle_beam &particle_beam: particle_beams) {
         particle_beam.tick(tanks);
 
-        //Damage all tanks within the damage window of the beam (the window is an axis-aligned bounding box)
+        //Damage all tanks within the damage window of the beam (the window is an axis-aligned bounding square)
         for (Tank &tank: tanks) {
             if (tank.active &&
                 particle_beam.rectangle.intersects_circle(tank.get_position(), tank.get_collision_radius())) {
@@ -245,10 +247,29 @@ void Game::updateRockets() {
         rocket.tick();
 
         //Check if rocket collides with enemy tank, spawn explosion, and if tank is destroyed spawn a smoke plume
-        RocketHitsTank(rocket);
+        rocketIntersectsTank(rocket);
     }
 }
 
+void Game::rocketIntersectsTank(Rocket &rocket) {
+    vec2 cellPos(rocket.position.x / grid.CELL_SIZE, rocket.position.y / grid.CELL_SIZE);
+
+    for (int x = cellPos.x - 1; x < cellPos.x + 1; ++x) {
+        for (int y = cellPos.y - 1; y < cellPos.y + 1; ++y) {
+            for (Tank *tank: grid.getTanksAt(cellPos)) {
+                if (tank->active && (tank->color != rocket.color) &&
+                    rocket.intersects(tank->position, tank->collision_radius)) {
+                    drawExplosionOnHitTank(*tank);
+                    drawSmokeOnDestroyedTank(*tank);
+                    rocket.deactivate();
+                    return;
+                }
+            }
+        }
+    }
+}
+
+//old function
 void Game::RocketHitsTank(Rocket &rocket) {
     for (Tank &tank: tanks) {
         bool activeTankIsHitByEnemyRocket =
@@ -262,6 +283,9 @@ void Game::RocketHitsTank(Rocket &rocket) {
         }
     }
 }
+
+//todo create method that uses quad tree to more efficiently calculate rocket intersections
+
 
 void Game::drawExplosionOnHitTank(Tank &tank) { explosions.push_back(Explosion(&explosion, tank.position)); }
 

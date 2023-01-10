@@ -79,18 +79,16 @@ using namespace std;
 #include "template.h"
 #include "surface.h"
 
-
 using namespace Tmpl8;
 
 #include "thread_pool.h"
-
 #include "tank.h"
 #include "terrain.h"
 #include "rocket.h"
 #include "smoke.h"
 #include "explosion.h"
 #include "particle_beam.h"
-
+#include "Grid.h"
 #include "game.h"
 
 // clang-format on
