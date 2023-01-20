@@ -19,10 +19,12 @@ namespace Tmpl8
         vector<TerrainTile*> exits;
         bool visited = false;
 
-        size_t position_x;
-        size_t position_y;
+        float position_x;
+        float position_y;
 
         TileType tile_type;
+
+
 
     private:
     };
@@ -38,7 +40,7 @@ namespace Tmpl8
 
         //Use Breadth-first search to find shortest route to the destination
         vector<vec2> get_route(const Tank& tank, const vec2& target);
-
+        float get_distance_to_target(const TerrainTile* current_tile, const TerrainTile* destination) const;
         float get_speed_modifier(const vec2& position) const;
 
 
@@ -66,10 +68,6 @@ namespace Tmpl8
     };
     typedef std::pair<float, std::vector<TerrainTile*>> FloatVectorPair;
 
-    struct CompareDist {
-        bool operator()(const FloatVectorPair& left, const FloatVectorPair& right) const {
-            return left.first > right.first;
+    
 
-        }
-    };
 }

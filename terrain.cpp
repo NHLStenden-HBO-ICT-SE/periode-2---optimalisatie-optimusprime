@@ -128,6 +128,18 @@ namespace Tmpl8
         }
     }
    
+    struct CompareDist {
+        bool operator()(const FloatVectorPair& left, const FloatVectorPair& right) const {
+            return left.first > right.first;
+
+        }
+    };
+
+    float Terrain::get_distance_to_target(const TerrainTile* current_tile, const TerrainTile* destination) const
+    {
+        return fabs((((float)destination->position_x) - ((float)current_tile->position_x)) + (((float)destination->position_y) - ((float)current_tile->position_y)));
+    }
+
 
     //Use Breadth-first search to find shortest route to the destination
     vector<vec2> Terrain::get_route(const Tank& tank, const vec2& target)
@@ -140,18 +152,18 @@ namespace Tmpl8
         const size_t target_y = target.y / sprite_size;
 
         //Init queue with start tile
-        std::queue<vector<TerrainTile*>> queue;
-        queue.emplace();
-        queue.back().push_back(&tiles.at(pos_y).at(pos_x));
+        priority_queue<FloatVectorPair, vector<FloatVectorPair>, CompareDist> queue;
+
+        queue.push({ 1, vector<TerrainTile*>{ &tiles.at(pos_y).at(pos_x) } });
 
         // use hash set to keep track of visited tiles 
-        std::unordered_set<TerrainTile*> visited;
+        std::vector<TerrainTile*> visited;
 
         bool route_found = false;
         vector<TerrainTile*> current_route;
         while (!queue.empty() && !route_found)
         {
-            current_route = queue.front();
+            current_route = queue.top().second;
             queue.pop();
             TerrainTile* current_tile = current_route.back();
 
@@ -164,13 +176,22 @@ namespace Tmpl8
                     route_found = true;
                     break;
                 }
-                else if (visited.find(exit) == visited.end())
+                else if (!exit->visited)
                 {
-                    visited.insert(exit);
-                    queue.push(current_route);
-                    queue.back().push_back(exit);
+                    exit->visited = true;
+                    visited.push_back(exit);
+                    float cost = get_distance_to_target(exit, &tiles.at(target_y).at(target_x));
+                    current_route.push_back(exit);
+                    queue.push({ cost, current_route });
+                    current_route.pop_back();
                 }
             }
+        }
+
+        //Reset tiles
+        for (TerrainTile* tile : visited)
+        {
+            tile->visited = false;
         }
 
         if (route_found)
