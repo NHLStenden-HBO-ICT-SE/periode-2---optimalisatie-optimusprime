@@ -128,6 +128,9 @@ namespace Tmpl8
         }
     }
    
+    /// <summary>
+    ///  Compares the first element of each pair using "left.first" and "right.first" and returns "true" if the left element is greater than the right element.
+    /// </summary>
     struct CompareDist {
         bool operator()(const FloatVectorPair& left, const FloatVectorPair& right) const {
             return left.first > right.first;
@@ -135,13 +138,19 @@ namespace Tmpl8
         }
     };
 
-    float Terrain::get_distance_to_target(const TerrainTile* current_tile, const TerrainTile* destination) const
+    /// <summary>
+    /// This struct calculates the distance to a destination point on a terrain by finding the absolute value
+    /// </summary>
+    /// <param name="current_tile"></param>
+    /// <param name="destination"></param>
+    /// <returns></returns>
+    float Terrain::calculate_distance_to_goal(const TerrainTile* current_tile, const TerrainTile* destination) const
     {
         return fabs((((float)destination->position_x) - ((float)current_tile->position_x)) + (((float)destination->position_y) - ((float)current_tile->position_y)));
     }
 
 
-    //Use Breadth-first search to find shortest route to the destination
+    //A* algorithm 
     vector<vec2> Terrain::get_route(const Tank& tank, const vec2& target)
     {
         //Find start and target tile
@@ -180,7 +189,7 @@ namespace Tmpl8
                 {
                     exit->visited = true;
                     visited.push_back(exit);
-                    float cost = get_distance_to_target(exit, &tiles.at(target_y).at(target_x));
+                    float cost = calculate_distance_to_goal(exit, &tiles.at(target_y).at(target_x));
                     current_route.push_back(exit);
                     queue.push({ cost, current_route });
                     current_route.pop_back();
