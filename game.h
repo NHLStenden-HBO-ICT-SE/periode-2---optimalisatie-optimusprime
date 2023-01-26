@@ -64,8 +64,8 @@ namespace Tmpl8 {
         vector<Particle_beam> particle_beams;
         Terrain background_terrain;
         std::vector<vec2> forcefield_hull;
-        std::mutex mutex;
-        std::mutex rocketLock;
+        std::mutex tankMutex;
+        std::mutex rocketMutex;
 
     private:
         Font *frame_count_font;
@@ -80,7 +80,7 @@ namespace Tmpl8 {
 
         void tankCollision();
 
-        void updateTank(int start, int stop);
+        void updatePartOfTankList(int start, int stop);
 
         void updateSmoke();
 

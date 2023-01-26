@@ -254,7 +254,7 @@ void Game::moveRockets() {
 }
 
 void Game::doRocketDamage() {
-    for (Rocket &rocket:rockets) {
+    for (Rocket &rocket: rockets) {
         rocketIntersectsTank(rocket);
     }
 }
@@ -360,26 +360,25 @@ void Game::updateSmoke() {
 }
 
 //todo concurrency to improve speed of function
-void Game::updateTank(int start, int end) {
+void Game::updatePartOfTankList(int start, int end) {
     for (int j = start; j < end; j++) {
-        Tank& tank = tanks.at(j);
+        Tank &tank = tanks.at(j);
         if (tank.active) {
-
-            //Move tanks according to speed and nudges (see above) also reload
-            mutex.lock();
-            tank.tick(background_terrain);
-            mutex.unlock();
-
+            { // to stop lock after tick
+                const std::lock_guard<std::mutex> tankLock(tankMutex);
+                //Move tanks according to speed and nudges (see above) also reload
+                tank.tick(background_terrain);
+            }
             //Shoot at closest target if reloaded
             if (tank.rocket_reloaded()) {
                 Tank &target = find_closest_enemy(tank);
-
-                mutex.lock();
-                rockets.push_back(
-                        Rocket(tank.position, (target.get_position() - tank.position).normalized() * 3, rocket_radius,
-                               tank.color, ((tank.color == RED) ? &rocket_red : &rocket_blue)));
-                mutex.unlock();
-
+                { // to stop lock after push_back
+                    const std::lock_guard<std::mutex> tankLock(rocketMutex);
+                    rockets.push_back(
+                            Rocket(tank.position, (target.get_position() - tank.position).normalized() * 3,
+                                   rocket_radius,
+                                   tank.color, ((tank.color == RED) ? &rocket_red : &rocket_blue)));
+                }
                 tank.reload_rocket();
             }
         }
@@ -391,15 +390,15 @@ void Game::updateTanksConcurrent() {
     int remainder = tanks.size() % threadPool.getAmountOfCores();
     int start = 0, stop = 0;
     std::vector<std::future<void>> workingThreads;
-    for(int i = 0; i < threadPool.getAmountOfCores(); i++) {
+    for (int i = 0; i < threadPool.getAmountOfCores(); i++) {
         start = stop;
         stop += tanksPerThread;
-        if(remainder>0){
-            stop +=1;
+        if (remainder > 0) {
+            stop += 1;
             remainder--;
         }
 
-         workingThreads.push_back(threadPool.enqueue([&, start, stop]() { updateTank(start, stop);}));
+        workingThreads.push_back(threadPool.enqueue([&, start, stop]() { updatePartOfTankList(start, stop); }));
     }
 
     for (int i = 0; i < workingThreads.size(); ++i) {
