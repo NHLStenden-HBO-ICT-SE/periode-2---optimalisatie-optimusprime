@@ -43,7 +43,7 @@ static Sprite particle_beam_sprite(particle_beam_img, 3);
 
 const static vec2 tank_size(7, 9);
 const static vec2 rocket_size(6, 6);
-
+ThreadPool threadPool(std::thread::hardware_concurrency());
 
 // -----------------------------------------------------------
 // Initialize the simulation state
@@ -86,12 +86,15 @@ void Game::init() {
         grid.add(&tanks.at(i));
     }
 
+
     particle_beams.push_back(
             Particle_beam(vec2(590, 327), vec2(100, 50), &particle_beam_sprite, particle_beam_hit_value));
     particle_beams.push_back(
             Particle_beam(vec2(64, 64), vec2(100, 50), &particle_beam_sprite, particle_beam_hit_value));
     particle_beams.push_back(
             Particle_beam(vec2(1200, 600), vec2(100, 50), &particle_beam_sprite, particle_beam_hit_value));
+
+    // Create a threadPool with the amount of objects the hardware has
 }
 
 // -----------------------------------------------------------
@@ -140,7 +143,6 @@ bool Tmpl8::Game::left_of_line(vec2 line_start, vec2 line_end, vec2 point) {
 void Game::update(float deltaTime) {
 
     sortActiveTanks();
-
     //Calculate the route to the destination for each tank using BFS
     //Initializing routes here, so it gets counted for performance..
     initializeTankRoute();
@@ -151,7 +153,7 @@ void Game::update(float deltaTime) {
     tankCollision();
 
     //Update tanks
-    updateTanks();
+    updateTanksConcurrent();
 
     //Update smoke plumes
     updateSmoke();
@@ -165,7 +167,10 @@ void Game::update(float deltaTime) {
     calcConvexHull(findFirstActiveTank(), point_on_hull);
 
     //Update rockets
-    updateRockets();
+    moveRockets();
+
+    //Check if rocket collides with enemy tank, spawn explosion, and if tank is destroyed spawn a smoke plume
+    doRocketDamage();
 
     //Disable rockets if they collide with the "force field"
     //Hint: A point to convex hull intersection test might be better here? :) (Disable if outside)
@@ -242,11 +247,14 @@ void Game::disableRockets() {
     }
 }
 
-void Game::updateRockets() {
+void Game::moveRockets() {
     for (Rocket &rocket: rockets) {
         rocket.tick();
+    }
+}
 
-        //Check if rocket collides with enemy tank, spawn explosion, and if tank is destroyed spawn a smoke plume
+void Game::doRocketDamage() {
+    for (Rocket &rocket:rockets) {
         rocketIntersectsTank(rocket);
     }
 }
@@ -351,24 +359,53 @@ void Game::updateSmoke() {
     }
 }
 
-void Game::updateTanks() {
-    for (Tank &tank: tanks) {
+//todo concurrency to improve speed of function
+void Game::updateTank(int start, int end) {
+    for (int j = start; j < end; j++) {
+        Tank& tank = tanks.at(j);
         if (tank.active) {
+
             //Move tanks according to speed and nudges (see above) also reload
+            mutex.lock();
             tank.tick(background_terrain);
+            mutex.unlock();
 
             //Shoot at closest target if reloaded
             if (tank.rocket_reloaded()) {
                 Tank &target = find_closest_enemy(tank);
 
+                mutex.lock();
                 rockets.push_back(
                         Rocket(tank.position, (target.get_position() - tank.position).normalized() * 3, rocket_radius,
                                tank.color, ((tank.color == RED) ? &rocket_red : &rocket_blue)));
+                mutex.unlock();
 
                 tank.reload_rocket();
             }
         }
     }
+}
+
+void Game::updateTanksConcurrent() {
+    int tanksPerThread = tanks.size() / threadPool.getAmountOfCores();
+    int remainder = tanks.size() % threadPool.getAmountOfCores();
+    int start = 0, stop = 0;
+    std::vector<std::future<void>> workingThreads;
+    for(int i = 0; i < threadPool.getAmountOfCores(); i++) {
+        start = stop;
+        stop += tanksPerThread;
+        if(remainder>0){
+            stop +=1;
+            remainder--;
+        }
+
+         workingThreads.push_back(threadPool.enqueue([&, start, stop]() { updateTank(start, stop);}));
+    }
+
+    for (int i = 0; i < workingThreads.size(); ++i) {
+        workingThreads.at(i).wait();
+    }
+
 }
 
 void Game::tankCollision() {

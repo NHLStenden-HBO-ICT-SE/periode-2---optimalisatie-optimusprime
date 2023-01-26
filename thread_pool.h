@@ -24,8 +24,10 @@ class ThreadPool
   public:
     ThreadPool(size_t numThreads) : stop(false)
     {
-        for (size_t i = 0; i < numThreads; ++i)
+        for (size_t i = 0; i < numThreads; ++i) {
             workers.push_back(std::thread(Worker(*this)));
+        }
+        AMOUNT_OF_CORES = numThreads;
     }
 
     ~ThreadPool()
@@ -37,10 +39,14 @@ class ThreadPool
             thread.join();
     }
 
+    int getAmountOfCores() {
+        return AMOUNT_OF_CORES;
+    }
+
     template <class T>
     auto enqueue(T task) -> std::future<decltype(task())>
     {
-        //Wrap the function in a packaged_task so we can return a future object
+        //Wrap the function in a packaged_task, so we can return a future object
         auto wrapper = std::make_shared<std::packaged_task<decltype(task())()>>(std::move(task));
 
         //Scope to restrict critical section
@@ -59,8 +65,11 @@ class ThreadPool
         return wrapper->get_future();
     }
 
+
+
   private:
     friend class Worker; //Gives access to the private variables of this class
+    int AMOUNT_OF_CORES;
 
     std::vector<std::thread> workers;
     std::deque<std::function<void()>> tasks;
@@ -82,7 +91,7 @@ inline void Worker::operator()()
         {
             std::unique_lock<std::mutex> locker(pool.queue_mutex);
 
-            //Wait until some work is ready or we are stopping the threadpool
+            //Wait until some work is ready, or we are stopping the threadpool
             //Because of spurious wakeups we need to check if there is actually a task available or we are stopping
             pool.condition.wait(locker, [=] { return pool.stop || !pool.tasks.empty(); });
 

@@ -33,7 +33,6 @@ public:
 
     std::vector<Tank *> getTanksAt(vec2 cellPosition);
 
-
     int NUM_CELLS;
     int CELL_SIZE;
 
