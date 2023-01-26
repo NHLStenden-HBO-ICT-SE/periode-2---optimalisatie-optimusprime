@@ -167,7 +167,7 @@ void Game::update(float deltaTime) {
     calcConvexHull(findFirstActiveTank(), point_on_hull);
 
     //Update rockets
-    moveRockets();
+    moveRocketsConcurrently();
 
     //Check if rocket collides with enemy tank, spawn explosion, and if tank is destroyed spawn a smoke plume
     doRocketDamage();
@@ -247,11 +247,35 @@ void Game::disableRockets() {
     }
 }
 
-void Game::moveRockets() {
-    for (Rocket &rocket: rockets) {
+void Game::moveRocketsConcurrently() {
+    int rocketsPerThread = rockets.size() / threadPool.getAmountOfCores();
+    int remainder = rockets.size() % threadPool.getAmountOfCores();
+    int start = 0, end = 0;
+    std::vector<std::future<void>> workingThreads;
+
+    for (int i = 0; i < threadPool.getAmountOfCores(); i++) {
+        start = end;
+        end += rocketsPerThread;
+        if (remainder > 0) {
+            end += 1;
+            remainder--;
+        }
+        workingThreads.push_back(threadPool.enqueue([&, start, end]() { updatePartOfRocketList(start, end); }));
+    }
+
+    for (int i = 0; i < workingThreads.size(); ++i) {
+        workingThreads.at(i).wait();
+    }
+}
+
+void Game::updatePartOfRocketList(int start, int end) {
+    for (int j = start; j < end; j++) {
+        Rocket &rocket = rockets.at(j);
+        //const std::lock_guard<std::mutex> tankLock(rocketMutex);
         rocket.tick();
     }
 }
+
 
 void Game::doRocketDamage() {
     for (Rocket &rocket: rockets) {
@@ -291,9 +315,6 @@ void Game::RocketHitsTank(Rocket &rocket) {
         }
     }
 }
-
-//todo create method that uses quad tree to more efficiently calculate rocket intersections
-
 
 void Game::drawExplosionOnHitTank(Tank &tank) { explosions.push_back(Explosion(&explosion, tank.position)); }
 
@@ -359,7 +380,6 @@ void Game::updateSmoke() {
     }
 }
 
-//todo concurrency to improve speed of function
 void Game::updatePartOfTankList(int start, int end) {
     for (int j = start; j < end; j++) {
         Tank &tank = tanks.at(j);
@@ -397,14 +417,12 @@ void Game::updateTanksConcurrent() {
             stop += 1;
             remainder--;
         }
-
         workingThreads.push_back(threadPool.enqueue([&, start, stop]() { updatePartOfTankList(start, stop); }));
     }
 
     for (int i = 0; i < workingThreads.size(); ++i) {
         workingThreads.at(i).wait();
     }
-
 }
 
 void Game::tankCollision() {
