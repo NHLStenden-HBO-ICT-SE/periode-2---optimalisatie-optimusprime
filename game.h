@@ -80,7 +80,9 @@ namespace Tmpl8 {
 
         void tankCollision();
 
-        void updatePartOfTankList(int start, int stop);
+        void updatePartOfTankList(int start, int end);
+
+        void updatePartOfRocketList(int start, int end);
 
         void updateSmoke();
 
@@ -90,7 +92,7 @@ namespace Tmpl8 {
 
         vec2 findLeftPointOnConvexHull();
 
-        void moveRockets();
+        void moveRocketsConcurrently();
 
         void disableRockets();
 

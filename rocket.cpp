@@ -13,7 +13,7 @@ namespace Tmpl8 {
 
     void Rocket::tick() {
         position += speed;
-        if (++current_frame > 8) current_frame = 0; //todo why?
+        if (++current_frame > 8) current_frame = 0;
     }
 
 //Draw the sprite with the facing based on this rockets movement direction
