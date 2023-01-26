@@ -58,14 +58,14 @@ namespace Tmpl8 {
     private:
         Surface *screen;
         vector<Tank> tanks;
-        vector<Tank> activeTanks;
         vector<Rocket> rockets;
         vector<Smoke> smokes;
         vector<Explosion> explosions;
         vector<Particle_beam> particle_beams;
-
         Terrain background_terrain;
         std::vector<vec2> forcefield_hull;
+        std::mutex tankMutex;
+        std::mutex rocketMutex;
 
     private:
         Font *frame_count_font;
@@ -80,7 +80,7 @@ namespace Tmpl8 {
 
         void tankCollision();
 
-        void updateTanks();
+        void updatePartOfTankList(int start, int stop);
 
         void updateSmoke();
 
@@ -90,7 +90,7 @@ namespace Tmpl8 {
 
         vec2 findLeftPointOnConvexHull();
 
-        void updateRockets();
+        void moveRockets();
 
         void disableRockets();
 
@@ -139,6 +139,10 @@ namespace Tmpl8 {
         void DrawSortedHealthBars();
 
         void rocketIntersectsTank(Rocket &rocket);
+
+        void doRocketDamage();
+
+        void updateTanksConcurrent();
     };
 
 };
