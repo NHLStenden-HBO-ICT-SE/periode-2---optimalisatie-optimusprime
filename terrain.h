@@ -1,9 +1,8 @@
 #pragma once
 
-namespace Tmpl8
-{
-    enum TileType
-    {
+namespace Tmpl8 {
+
+    enum TileType {
         GRASS,
         FORREST,
         ROCKS,
@@ -11,34 +10,36 @@ namespace Tmpl8
         WATER
     };
 
-    class TerrainTile
-    {
+    class TerrainTile {
     public:
         //TerrainTile *up, *down, *left, *right;
-        vector<TerrainTile*> exits;
+        vector<TerrainTile *> exits;
         bool visited = false;
 
-        size_t position_x;
-        size_t position_y;
+        float position_x;
+        float position_y;
 
         TileType tile_type;
+
 
     private:
     };
 
-    class Terrain
-    {
+    class Terrain {
     public:
 
         Terrain();
 
         void update();
-        void draw(Surface* target) const;
+
+        void draw(Surface *target) const;
 
         //Use Breadth-first search to find shortest route to the destination
-        vector<vec2> get_route(const Tank& tank, const vec2& target);
+        vector<vec2> get_route(const Tank &tank, const vec2 &target);
 
-        float get_speed_modifier(const vec2& position) const;
+        float calculate_distance_to_goal(const TerrainTile *current_tile, const TerrainTile *destination) const;
+
+        float get_speed_modifier(const vec2 &position) const;
 
 
     private:
@@ -63,4 +64,7 @@ namespace Tmpl8
 
         std::array<std::array<TerrainTile, terrain_width>, terrain_height> tiles;
     };
+
+    typedef std::pair<float, std::vector<TerrainTile *>> FloatVectorPair;
+
 }
