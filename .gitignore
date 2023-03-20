@@ -349,4 +349,5 @@ assets/
 # cmake-builds cLion
 cmake-build-debug/
 cmake-build-release/
-
+lib/glew-2.1.0/lib/x64/glew32s.lib
+lib/glew-2.1.0/lib/x64/.glew32s.lib.icloud
