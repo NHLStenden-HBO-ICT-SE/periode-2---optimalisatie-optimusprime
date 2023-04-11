@@ -88,7 +88,7 @@ namespace Tmpl8 {
 
         void calcConvexHull(int first_active, vec2 &point_on_hull);
 
-        int findFirstActiveTank();
+        int findFirstActiveTank() const;
 
         vec2 findLeftPointOnConvexHull();
 

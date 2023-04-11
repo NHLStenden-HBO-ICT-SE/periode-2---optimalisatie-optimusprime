@@ -304,29 +304,25 @@ void Game::drawSmokeOnDestroyedTank(Tank &tank) {
 }
 
 vec2 Game::findLeftPointOnConvexHull() {
-    vec2 point_on_hull = tanks.at(findFirstActiveTank()).position;
-    //Find left most tank position
+    vec2 leftmost_point = tanks.at(findFirstActiveTank()).position;
+    //Find leftmost tank position
     for (Tank &tank: tanks) {
-        if (tank.active) {
-            if (tank.position.x <= point_on_hull.x) {
-                point_on_hull = tank.position;
-            }
+        if (tank.active && tank.position.x <= leftmost_point.x) {
+            leftmost_point = tank.position;
         }
     }
-    return point_on_hull;
+    return leftmost_point;
 }
 
 
-//Find first active tank (this loop is a bit disgusting, fix?)
-int Game::findFirstActiveTank() {
-    int first_active = 0;
-    for (Tank &tank: tanks) {
-        if (tank.active) {
-            break;
+int Game::findFirstActiveTank() const {
+    const int numTanks = tanks.size();
+    for (int i = 0; i < numTanks; ++i) {
+        if (tanks[i].active) {
+            return i;
         }
-        first_active++;
     }
-    return first_active;
+    return -1; // if no active tank found
 }
 
 void Game::calcConvexHull(int first_active, vec2 &point_on_hull) {
@@ -458,7 +454,7 @@ void Game::DrawSortedHealthBars() {
 
         const int begin = ((t < 1) ? 0 : num_tanks_blue);
         vector<const Tank *> sorted_tanks;
-        insertion_sort_tanks_health(tanks, sorted_tanks, begin, begin + NUM_TANKS);
+        quick_sort_tanks_health(tanks, sorted_tanks, begin, begin + NUM_TANKS);
         sorted_tanks.erase(remove_if(sorted_tanks.begin(), sorted_tanks.end(),
                                      [](const Tank *tank) { return !tank->active; }),
                            sorted_tanks.end());
@@ -516,38 +512,92 @@ void Game::DrawTanks() {
     }
 }
 
-// -----------------------------------------------------------
-// Sort tanks by health value using insertion sort
-// -----------------------------------------------------------
-void
-Tmpl8::Game::insertion_sort_tanks_health(const std::vector<Tank> &original, std::vector<const Tank *> &sorted_tanks,
-                                         int begin, int end) {
-    const int NUM_TANKS = end - begin;
-    sorted_tanks.reserve(NUM_TANKS);
-    sorted_tanks.emplace_back(&original.at(begin));
-
-    for (int i = begin + 1; i < (begin + NUM_TANKS); i++) {
-        const Tank &current_tank = original.at(i);
-
-        for (int s = (int) sorted_tanks.size() - 1; s >= 0; s--) {
-            const Tank *current_checking_tank = sorted_tanks.at(s);
-
-            if ((current_checking_tank->compare_health(current_tank) <= 0)) {
-                sorted_tanks.insert(1 + sorted_tanks.begin() + s, &current_tank);
-                break;
-            }
-
-            if (s == 0) {
-                sorted_tanks.insert(sorted_tanks.begin(), &current_tank);
-                break;
-            }
-        }
-    }
-}
-
 void Tmpl8::Game::quick_sort_tanks_health(const std::vector<Tank> &original, std::vector<const Tank *> &sorted_tanks,
                                           int begin, int end) {
+    if (end - begin <= 1) {
+        // base case: the vector has 0 or 1 elements
+        if (end - begin == 1) {
+            sorted_tanks.emplace_back(&tanks.at(begin));
+        }
+        return;
+    }
 
+    // Compare tank constants
+    const int EQUAL = 0;
+    const int HIGHER = 1;
+    const int LOWER = -1;
+
+    // partition the vector into two halves
+    int pivot_index = begin + (end - begin) / 2;
+    Tank &pivot_tank = tanks.at(pivot_index);
+    int beginning = begin;
+    int ending = end - 1;
+
+    while (beginning <= ending) {
+        while (tanks.at(beginning).compare_health(pivot_tank) < EQUAL) {
+            beginning++;
+        }
+
+        while (tanks.at(ending).compare_health(pivot_tank) > EQUAL) {
+            ending--;
+        }
+
+        if (beginning <= ending) {
+            std::swap(tanks.at(beginning), tanks.at(ending));
+            beginning++;
+            ending--;
+        }
+    }
+
+    // recursively sort the two halves
+    quick_sort_tanks_health(tanks, sorted_tanks, begin, ending + 1);
+    quick_sort_tanks_health(tanks, sorted_tanks, beginning, end);
+
+    // merge the two sorted halves and the pivot
+    std::vector<const Tank *> left_half;
+    std::vector<const Tank *> right_half;
+    left_half.reserve(ending - begin + 1);
+    right_half.reserve(end - beginning + 1);
+
+    for (int k = begin; k <= ending; k++) {
+        left_half.emplace_back(&tanks.at(k));
+    }
+
+    for (int k = beginning; k < end; k++) {
+        right_half.emplace_back(&tanks.at(k));
+    }
+
+    // clear the sorted_tanks vector and reserve space for the sorted result
+    sorted_tanks.clear();
+    sorted_tanks.reserve(end - begin);
+
+    // merge the left half, the pivot, and the right half into the sorted_tanks vector
+    int left_index = 0;
+    int right_index = 0;
+    sorted_tanks.emplace_back(&tanks.at(pivot_index));
+
+    while (left_index < left_half.size() && right_index < right_half.size()) {
+        const Tank *left_tank = left_half.at(left_index);
+        const Tank *right_tank = right_half.at(right_index);
+
+        if (left_tank->compare_health(*right_tank) <= 0) {
+            sorted_tanks.emplace_back(left_tank);
+            left_index++;
+        } else {
+            sorted_tanks.emplace_back(right_tank);
+            right_index++;
+        }
+    }
+
+    while (left_index < left_half.size()) {
+        sorted_tanks.emplace_back(left_half.at(left_index));
+        left_index++;
+    }
+
+    while (right_index < right_half.size()) {
+        sorted_tanks.emplace_back(right_half.at(right_index));
+        right_index++;
+    }
 }
 
 
