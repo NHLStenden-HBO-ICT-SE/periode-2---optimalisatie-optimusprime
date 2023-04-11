@@ -145,6 +145,9 @@ namespace Tmpl8 {
         void doRocketDamage();
 
         void updateTanksConcurrent();
+
+        void
+        quick_sort_tanks_health(const vector<Tank> &original, vector<const Tank *> &sorted_tanks, int begin, int end);
     };
 
 };

@@ -142,7 +142,6 @@ bool Tmpl8::Game::left_of_line(vec2 line_start, vec2 line_end, vec2 point) {
 // -----------------------------------------------------------
 void Game::update(float deltaTime) {
 
-    sortActiveTanks();
     //Calculate the route to the destination for each tank using BFS
     //Initializing routes here, so it gets counted for performance..
     initializeTankRoute();
@@ -195,11 +194,6 @@ void Game::removeInactiveRockets() {
                           rockets.end(),
                           [](const Rocket &rocket) { return !rocket.active; }),
                   rockets.end());
-}
-
-void Game::sortActiveTanks() {
-    std::stable_sort(tanks.begin(), tanks.end(), Tank::compare_active);
-    inactiveTanks = count_if(tanks.begin(), tanks.end(), [](const Tank &t) { return !t.active; });
 }
 
 void Game::eraseExplosions() {
@@ -301,21 +295,6 @@ void Game::rocketIntersectsTank(Rocket &rocket) {
     }
 }
 
-//old function
-void Game::RocketHitsTank(Rocket &rocket) {
-    for (Tank &tank: tanks) {
-        bool activeTankIsHitByEnemyRocket =
-                tank.active && (tank.color != rocket.color) && rocket.intersects(tank.position, tank.collision_radius);
-
-        if (activeTankIsHitByEnemyRocket) {
-            drawExplosionOnHitTank(tank);
-            drawSmokeOnDestroyedTank(tank);
-            rocket.deactivate();
-            break;
-        }
-    }
-}
-
 void Game::drawExplosionOnHitTank(Tank &tank) { explosions.push_back(Explosion(&explosion, tank.position)); }
 
 void Game::drawSmokeOnDestroyedTank(Tank &tank) {
@@ -339,7 +318,6 @@ vec2 Game::findLeftPointOnConvexHull() {
 
 
 //Find first active tank (this loop is a bit disgusting, fix?)
-// door sortTanks is altijd de eerste tank active, alle inactieve tanks worden achteraan gezet
 int Game::findFirstActiveTank() {
     int first_active = 0;
     for (Tank &tank: tanks) {
@@ -565,6 +543,11 @@ Tmpl8::Game::insertion_sort_tanks_health(const std::vector<Tank> &original, std:
             }
         }
     }
+}
+
+void Tmpl8::Game::quick_sort_tanks_health(const std::vector<Tank> &original, std::vector<const Tank *> &sorted_tanks,
+                                          int begin, int end) {
+
 }
 
 
