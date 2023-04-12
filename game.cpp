@@ -146,8 +146,6 @@ void Game::update(float deltaTime) {
     //Initializing routes here, so it gets counted for performance..
     initializeTankRoute();
 
-    //todo make tank.active Vector to stop all a lot of bullshit checks.
-
     //Check tank collision and nudge tanks away from each other
     tankCollision();
 
@@ -157,10 +155,6 @@ void Game::update(float deltaTime) {
     //Update smoke plumes
     updateSmoke();
 
-    //Calculate "force field" around active tanks
-    // forcefield_hull.clear(); // is now done in calcConvexHull()
-
-    //todo findLeftPointOnConvexHull as parameter in calcConvexHull() it's not working yet. Have to find the reason
     vec2 point_on_hull = findLeftPointOnConvexHull();
     //Calculate convex hull for 'rocket barrier'
     calcConvexHull(findFirstActiveTank(), point_on_hull);
