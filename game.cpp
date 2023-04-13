@@ -445,10 +445,15 @@ void Game::draw() {
 void Game::DrawSortedHealthBars() {
     for (int t = 0; t < 2; t++) {
         const int NUM_TANKS = ((t < 1) ? num_tanks_blue : num_tanks_red);
-
         const int begin = ((t < 1) ? 0 : num_tanks_blue);
+
+
         vector<const Tank *> sorted_tanks;
-        quick_sort_tanks_health(tanks, sorted_tanks, begin, begin + NUM_TANKS);
+        //for(int k=0; k<tanks.size(); k++)
+//            sorted_tanks.push_back(&(tanks[k]));
+
+        quick_sort_tanks_health(sorted_tanks, begin, begin + NUM_TANKS);
+
         sorted_tanks.erase(remove_if(sorted_tanks.begin(), sorted_tanks.end(),
                                      [](const Tank *tank) { return !tank->active; }),
                            sorted_tanks.end());
@@ -506,7 +511,7 @@ void Game::DrawTanks() {
     }
 }
 
-void Tmpl8::Game::quick_sort_tanks_health(const std::vector<Tank> &original, std::vector<const Tank *> &sorted_tanks,
+void Tmpl8::Game::quick_sort_tanks_health(std::vector<const Tank *> &sorted_tanks,
                                           int begin, int end) {
     if (end - begin <= 1) {
         // base case: the vector has 0 or 1 elements
@@ -544,8 +549,8 @@ void Tmpl8::Game::quick_sort_tanks_health(const std::vector<Tank> &original, std
     }
 
     // recursively sort the two halves
-    quick_sort_tanks_health(tanks, sorted_tanks, begin, ending + 1);
-    quick_sort_tanks_health(tanks, sorted_tanks, beginning, end);
+    quick_sort_tanks_health(sorted_tanks, begin, ending + 1);
+    quick_sort_tanks_health(sorted_tanks, beginning, end);
 
     // merge the two sorted halves and the pivot
     std::vector<const Tank *> left_half;
@@ -593,7 +598,6 @@ void Tmpl8::Game::quick_sort_tanks_health(const std::vector<Tank> &original, std
         right_index++;
     }
 }
-
 
 // -----------------------------------------------------------
 // Draw the health bars based on the given tanks health values

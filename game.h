@@ -146,8 +146,7 @@ namespace Tmpl8 {
 
         void updateTanksConcurrent();
 
-        void
-        quick_sort_tanks_health(const vector<Tank> &original, vector<const Tank *> &sorted_tanks, int begin, int end);
+        void quick_sort_tanks_health(vector<const Tank *> &sorted_tanks, int begin, int end);
     };
 
 };
